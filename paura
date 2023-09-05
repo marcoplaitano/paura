@@ -1,0 +1,150 @@
+#!/bin/bash
+
+# File:   paura
+# Author: Marco Plaitano
+# Date:   05 Sep 2023
+# Brief:  Install and manage AUR packages.
+
+
+_die() {
+    [[ -n $1 ]] && error_msg="$1" || error_msg="Error in $(basename "$0")."
+    if [[ $TERM != dumb ]]; then
+        echo "$error_msg" >&2
+    else
+        notify-send "Error in $(basename "$0")" "$error_msg"
+    fi
+    exit 1
+}
+
+_help() {
+    printf "Usage: $(basename $0) [PKG] [OPTION]
+Install and manage AUR packages.
+
+-h, --help          Show this guide and exit.
+PKG                 URL or name of package to install or update.
+-l, --list          List all installed packages.
+-r, --remove PKG    Remove package.
+-u, --update        Update all installed packages.
+"
+}
+
+
+# Install package from repository.
+_install() {
+    local repo pkg_name pkg_dir
+    repo="$1"
+    [[ -z $repo ]] && _die "No package specified."
+    if [[ "$repo" != "https://aur.archlinux.org/"* ]]; then
+        repo="https://aur.archlinux.org/$repo"
+    fi
+    # Strip package name to create directory.
+    pkg_name="${repo#*archlinux.org/}"
+    pkg_name="${pkg_name%.git}"
+    pkg_dir="$_PAURA_ROOT_DIR/$pkg_name"
+
+    # Package already installed, pull new changes.
+    if [[ -d "$pkg_dir" ]]; then
+        pushd "$pkg_dir" &>/dev/null
+        output=$(git pull)
+        [[ $? -ne 0 ]] && _die "Could not pull new changes from source."
+        # Do nothing if the package is already updated.
+        if [[ "$output" == *"up to date"* ]]; then
+            echo "Already up to date."
+            popd &>/dev/null
+            return
+        fi
+    # Package not installed, clone its repository.
+    else
+        output=$(git clone "$repo" "$pkg_dir" 2>&1)
+        [[ $? -ne 0 ]] && _die "Could not download package."
+        # Do nothing if the repository is empty.
+        if [[ "$output" == *"empty repository"* ]]; then
+            [[ -d "$pkg_dir" ]] && rm -rf "$pkg_dir"
+            _die "Package doesn't seem to exist."
+        fi
+        pushd "$pkg_dir" &>/dev/null
+    fi
+
+    # Install package from source code.
+    # If installation is successful add package name to the list.
+    if makepkg -si --noconfirm ; then
+        if ! grep -q "$pkg_name" "$_PAURA_LIST_FILE" ; then
+            echo "$pkg_name" >> "$_PAURA_LIST_FILE"
+        fi
+    fi
+    popd &>/dev/null
+}
+
+
+# Check that the list of installed packages exists and is readable.
+_check_list() {
+    if [[ ! -f "$_PAURA_LIST_FILE" ]]; then
+        _die "No AUR packages installed."
+    fi
+    if [[ ! -r "$_PAURA_LIST_FILE" ]]; then
+        _die "Could not read list of packages from file '$_PAURA_LIST_FILE'."
+    fi
+}
+
+
+# List all installed packages.
+_list() {
+    _check_list
+    cat "$_PAURA_LIST_FILE"
+}
+
+
+# Delete package.
+_remove() {
+    local pkg_name pkg_dir
+    pkg_name="$1"
+    [[ -z $pkg_name ]] && _die "No package specified."
+    pkg_dir="$_PAURA_ROOT_DIR/$pkg_name"
+
+    # Uninstall command (check for the need of sudo).
+    cmd="pacman -R $pkg_name"
+    [[ "$EUID" -ne 0 ]] && cmd="sudo $cmd"
+    $cmd || _die
+    # Remove package directory.
+    [[ -d "$pkg_dir" ]] && rm -rf "$pkg_dir"
+    # Remove package name from list.
+    if [[ -w "$_PAURA_LIST_FILE" ]]; then
+        sed -i "/$pkg_name/d" "$_PAURA_LIST_FILE"
+    fi
+}
+
+
+# Update all installed packages.
+_update() {
+    _check_list
+    # Read list file line by line and update each package.
+    while read -r pkg; do
+        echo "############# Updating package: '$pkg'"
+        pkg="https://aur.archlinux.org/$pkg"
+        _install "$pkg"
+    done < "$_PAURA_LIST_FILE"
+}
+
+
+
+_PAURA_ROOT_DIR="$HOME/.cache/aur_pkgs"
+_PAURA_LIST_FILE="$_PAURA_ROOT_DIR/list.txt"
+
+# Create root directory if it does not exist yet.
+[[ ! -d "$_PAURA_ROOT_DIR" ]] && mkdir -p "$_PAURA_ROOT_DIR"
+
+# Parse command-line arguments.
+case "$1" in
+    -h | --help)
+        _help ;;
+    -l | --list)
+        _list ;;
+    -r | --remove)
+        _remove "$2" ;;
+    -u | --update)
+        _update ;;
+    -*)
+        _die "Invalid option. See '$(basename $0) -h' for more." ;;
+    *)
+        _install "$1" ;;
+esac
