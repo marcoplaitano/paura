@@ -14,16 +14,11 @@ install, update and remove AUR packages on any Arch-based distribution.
 
 ## Installation
 
-With `curl`:
+Download and give executable permissions:
 
 ```shell
 curl -o $HOME/.local/bin/paura https://raw.githubusercontent.com/marcoplaitano/paura/main/paura
-```
-
-With `wget`:
-
-```shell
-wget -O $HOME/.local/bin/paura https://raw.githubusercontent.com/marcoplaitano/paura/main/paura
+chmod +x $HOME/.local/bin/paura
 ```
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
