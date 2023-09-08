@@ -71,6 +71,9 @@ _install() {
         if ! grep -q "$pkg_name" "$_PAURA_LIST_FILE" ; then
             echo "$pkg_name" >> "$_PAURA_LIST_FILE"
         fi
+    # Remove installation directory if it fails.
+    else
+        [[ -d "$pkg_dir" ]] && rm -rf "$pkg_dir"
     fi
     popd &>/dev/null
 }
