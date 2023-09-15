@@ -55,6 +55,7 @@ _install() {
         fi
     # Package not installed, clone its repository.
     else
+        echo "Cloning repository..."
         output=$(git clone "$repo" "$pkg_dir" 2>&1)
         [[ $? -ne 0 ]] && _die "Could not download package."
         # Do nothing if the repository is empty.
