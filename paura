@@ -55,6 +55,7 @@ _install() {
         fi
     # Package not installed, clone its repository.
     else
+        new_installation=true
         echo "Cloning repository..."
         output=$(git clone "$repo" "$pkg_dir" 2>&1)
         [[ $? -ne 0 ]] && _die "Could not download package."
@@ -74,7 +75,10 @@ _install() {
         fi
     # Remove installation directory if it fails.
     else
-        [[ -d "$pkg_dir" ]] && rm -rf "$pkg_dir"
+        # Only remove directory if it is being installed for the first time.
+        if [[ -n $new_installation ]]; then
+            [[ -d "$pkg_dir" ]] && rm -rf "$pkg_dir"
+        fi
     fi
     popd &>/dev/null
 }
