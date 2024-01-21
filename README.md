@@ -28,9 +28,7 @@ chmod +x $HOME/.local/bin/paura
 **Installing** or **updating** a package:
 
 ```shell
-paura pfetch
-# or
-paura https://aur.archlinux.org/pfetch
+paura pfetch # or https://aur.archlinux.org/pfetch
 ```
 
 **Removing** a package:
@@ -51,6 +49,12 @@ paura -l
 paura -u
 ```
 
+**Search** for a package:
+
+```shell
+paura -s pfetch
+```
+
 ### Options Summary
 
 | Option                | Description                               |
@@ -59,6 +63,7 @@ paura -u
 | **PKG**               | Install or update package named **PKG**.  |
 | -l, --list            | List all installed packages.              |
 | -r, --remove **PKG**  | Remove package named **PKG**.             |
+| -s, --search **PKG**  | Search package named **PKG**.             |
 | -u, --update          | Update all installed packages.            |
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

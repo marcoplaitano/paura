@@ -17,30 +17,29 @@ _die() {
 }
 
 _help() {
-    printf "Usage: $(basename $0) [PKG] [OPTION]
+    printf "Usage: %s OPTION [PKG]
 Install and manage AUR packages.
 
--h, --help          Show this guide and exit.
-PKG                 URL or name of package to install or update.
--l, --list          List all installed packages.
--r, --remove PKG    Remove package.
--u, --update        Update all installed packages.
-"
+-h, --help          Show this guide and exit
+PKG                 Name or repository of package to install/update
+-l, --list          List all installed packages
+-r, --remove PKG    Remove package
+-s, --search PKG    Search for any package named PKG
+-u, --update        Update all installed packages\n" "$(basename "$0")"
 }
 
 
-# Install package from repository.
+
+# Install (or update) package.
 _install() {
-    local repo pkg_name pkg_dir
-    repo="$1"
-    [[ -z $repo ]] && _die "No package specified."
+    local repo="$1"
     if [[ "$repo" != "https://aur.archlinux.org/"* ]]; then
         repo="https://aur.archlinux.org/$repo"
     fi
     # Strip package name to create directory.
-    pkg_name="${repo#*archlinux.org/}"
+    local pkg_name="${repo#*archlinux.org/}"
     pkg_name="${pkg_name%.git}"
-    pkg_dir="$_PAURA_ROOT_DIR/$pkg_name"
+    local pkg_dir="$_PAURA_ROOT_DIR/$pkg_name"
 
     # Package already installed, pull new changes.
     if [[ -d "$pkg_dir" ]]; then
@@ -98,16 +97,15 @@ _check_list() {
 # List all installed packages.
 _list() {
     _check_list
-    cat "$_PAURA_LIST_FILE"
+    cat "$_PAURA_LIST_FILE" | sort -u
 }
 
 
 # Delete package.
 _remove() {
-    local pkg_name pkg_dir
-    pkg_name="$1"
+    local pkg_name="$1"
+    local pkg_dir="$_PAURA_ROOT_DIR/$pkg_name"
     [[ -z $pkg_name ]] && _die "No package specified."
-    pkg_dir="$_PAURA_ROOT_DIR/$pkg_name"
 
     # Uninstall command (check for the need of sudo).
     cmd="pacman -R $pkg_name"
@@ -119,6 +117,15 @@ _remove() {
     if [[ -w "$_PAURA_LIST_FILE" ]]; then
         sed -i "/$pkg_name/d" "$_PAURA_LIST_FILE"
     fi
+}
+
+
+# Search for package.
+_search() {
+    local pkg_name="$1"
+    [[ -z $pkg_name ]] && _die "No package specified."
+    curl -s "https://aur.archlinux.org/rpc/?v=5&type=search&arg=$pkg_name" | \
+        jq -r '.results.[] | "\u001b[1m\(.Name):\u001b[0m\n  \(.Description)"'
 }
 
 
@@ -135,24 +142,27 @@ _update() {
 
 
 
-_PAURA_ROOT_DIR="$HOME/.cache/aur_pkgs"
-_PAURA_LIST_FILE="$_PAURA_ROOT_DIR/list.txt"
+readonly _PAURA_ROOT_DIR="$HOME/.cache/aur_pkgs"
+readonly _PAURA_LIST_FILE="$_PAURA_ROOT_DIR/list.txt"
 
-# Create root directory if it does not exist yet.
 [[ ! -d "$_PAURA_ROOT_DIR" ]] && mkdir -p "$_PAURA_ROOT_DIR"
 
 # Parse command-line arguments.
 case "$1" in
+    '')
+        _die "Usage: $(basename "$0") OPTION [PKG]" ;;
     -h | --help)
         _help ;;
     -l | --list)
         _list ;;
     -r | --remove)
         _remove "$2" ;;
+    -s | --search)
+        _search "$2" ;;
     -u | --update)
         _update ;;
     -*)
-        _die "Invalid option. See '$(basename $0) -h' for more." ;;
+        _die "Invalid option. See '$(basename "$0") -h' for more." ;;
     *)
         _install "$1" ;;
 esac
