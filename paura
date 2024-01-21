@@ -7,12 +7,7 @@
 
 
 _die() {
-    [[ -n $1 ]] && error_msg="$1" || error_msg="Error in $(basename "$0")."
-    if [[ $TERM != dumb ]]; then
-        echo "$error_msg" >&2
-    else
-        notify-send "Error in $(basename "$0")" "$error_msg"
-    fi
+    [[ -n $1 ]] && echo "$1" >&2
     exit 1
 }
 
@@ -28,6 +23,7 @@ PKG                 Name or repository of package to install/update
 -u, --update        Update all installed packages\n" "$(basename "$0")"
 }
 
+# Check that the given programs are available.
 _needs_programs() {
     local programs="$@"
     for program in ${programs[@]}; do
