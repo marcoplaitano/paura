@@ -77,14 +77,16 @@ _install() {
         if ! grep -q "$pkg_name" "$_PAURA_LIST_FILE" ; then
             echo "$pkg_name" >> "$_PAURA_LIST_FILE"
         fi
+    popd &>/dev/null
     # Remove installation directory if it fails.
     else
         # Only remove directory if it is being installed for the first time.
         if [[ -n $new_installation ]]; then
             [[ -d "$pkg_dir" ]] && rm -rf "$pkg_dir"
         fi
-    fi
     popd &>/dev/null
+    _die
+    fi
 }
 
 
