@@ -17,8 +17,8 @@ install, update and remove AUR packages on any Arch-based distribution.
 Download and give executable permissions:
 
 ```shell
-curl -o $HOME/.local/bin/paura https://raw.githubusercontent.com/marcoplaitano/paura/main/paura
-chmod +x $HOME/.local/bin/paura
+curl -o $HOME/.local/bin/paura.sh https://raw.githubusercontent.com/marcoplaitano/paura/main/paura.sh
+chmod +x $HOME/.local/bin/paura.sh
 ```
 
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -28,31 +28,33 @@ chmod +x $HOME/.local/bin/paura
 **Installing** or **updating** a package:
 
 ```shell
-paura pfetch # or https://aur.archlinux.org/pfetch
+paura.sh pfetch
+# or
+paura.sh https://aur.archlinux.org/pfetch
 ```
 
 **Removing** a package:
 
 ```shell
-paura -r pfetch
+paura.sh -r pfetch
 ```
 
 **Listing** all installed packages:
 
 ```shell
-paura -l
+paura.sh -l
 ```
 
 **Updating all** installed packages:
 
 ```shell
-paura -u
+paura.sh -u
 ```
 
 **Search** for a package:
 
 ```shell
-paura -s pfetch
+paura.sh -s pfetch
 ```
 
 ### Options Summary

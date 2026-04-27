@@ -24,7 +24,7 @@ PKG                 Name or repository of package to install/update
 }
 
 # Check that the given programs are available.
-_needs_programs() {
+_check_dependencies() {
     local programs="$@"
     for program in ${programs[@]}; do
         if ! command -v "$program" &>/dev/null; then
@@ -36,7 +36,6 @@ _needs_programs() {
 
 # Install (or update) package.
 _install() {
-    _needs_programs git pacman grep
     local repo="$1"
     if [[ "$repo" != "https://aur.archlinux.org/"* ]]; then
         repo="https://aur.archlinux.org/$repo"
@@ -103,7 +102,6 @@ _check_list() {
 
 # List all installed packages.
 _list() {
-    _needs_programs cat sort
     _check_list
     cat "$_PAURA_LIST_FILE" | sort -u
 }
@@ -111,7 +109,6 @@ _list() {
 
 # Delete package.
 _remove() {
-    _needs_programs pacman sed
     local pkg_name="$1"
     local pkg_dir="$_PAURA_ROOT_DIR/$pkg_name"
     [[ -z $pkg_name ]] && _die "No package specified."
@@ -131,7 +128,6 @@ _remove() {
 
 # Search for package.
 _search() {
-    _needs_programs curl jq
     local pkg_name="$1"
     [[ -z $pkg_name ]] && _die "No package specified."
     curl -s "https://aur.archlinux.org/rpc/?v=5&type=search&arg=$pkg_name" | \
@@ -151,6 +147,7 @@ _update() {
 }
 
 
+_check_dependencies git pacman grep sed curl jq cat sort
 
 readonly _PAURA_ROOT_DIR="$HOME/.cache/aur_pkgs"
 readonly _PAURA_LIST_FILE="$_PAURA_ROOT_DIR/list.txt"
